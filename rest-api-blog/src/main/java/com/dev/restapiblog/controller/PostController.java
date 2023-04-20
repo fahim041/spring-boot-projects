@@ -1,11 +1,12 @@
 package com.dev.restapiblog.controller;
 
 import com.dev.restapiblog.payload.PostDto;
+import com.dev.restapiblog.payload.PostResponse;
 import com.dev.restapiblog.service.PostService;
+import com.dev.restapiblog.utils.AppConstants;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -23,8 +24,13 @@ public class PostController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<List<PostDto>> getPosts(){
-        return new ResponseEntity(postService.allPosts(), HttpStatus.OK);
+    public ResponseEntity<PostResponse> getPosts(
+            @RequestParam(value = "page", defaultValue = AppConstants.DEFAULT_PAGE_NUMBER, required = false) int page,
+            @RequestParam(value = "size", defaultValue = AppConstants.DEFAULT_PAGE_SIZE, required = false) int size,
+            @RequestParam(value = "sort", defaultValue = AppConstants.DEFAULT_SORT_BY, required = false) String sortBy,
+            @RequestParam(value = "sortDir", defaultValue = AppConstants.DEFAULT_SORT_DIR, required = false) String sortDir
+    ){
+        return new ResponseEntity(postService.allPosts(page, size, sortBy, sortDir), HttpStatus.OK);
     }
 
     @GetMapping("/{id}/")

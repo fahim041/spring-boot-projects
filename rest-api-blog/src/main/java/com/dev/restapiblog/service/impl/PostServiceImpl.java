@@ -3,8 +3,13 @@ package com.dev.restapiblog.service.impl;
 import com.dev.restapiblog.entity.Post;
 import com.dev.restapiblog.exception.ResourceNotFoundException;
 import com.dev.restapiblog.payload.PostDto;
+import com.dev.restapiblog.payload.PostResponse;
 import com.dev.restapiblog.repository.PostRepository;
 import com.dev.restapiblog.service.PostService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,7 +17,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class PostServiceImpl implements PostService {
-    private PostRepository postRepository;
+    private final PostRepository postRepository;
 
     public PostServiceImpl(PostRepository postRepository){
         this.postRepository = postRepository;
@@ -24,15 +29,27 @@ public class PostServiceImpl implements PostService {
 
         Post newPost = postRepository.save(post);
 
-        PostDto postResponse = mapToDto(newPost);
-
-        return postResponse;
+        return mapToDto(newPost);
     }
 
     @Override
-    public List<PostDto> allPosts() {
-        List<Post> posts = postRepository.findAll();
-        return posts.stream().map(post -> mapToDto(post)).collect(Collectors.toList());
+    public PostResponse allPosts(int page, int size, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Post> posts = postRepository.findAll(pageable);
+
+        List<Post> listOfPosts = posts.getContent();
+        List<PostDto> data = listOfPosts.stream().map(post -> mapToDto(post)).collect(Collectors.toList());
+        PostResponse postResponse = new PostResponse();
+        postResponse.setData(data);
+        postResponse.setPage(posts.getNumber());
+        postResponse.setSize(posts.getSize());
+        postResponse.setTotalElement(posts.getTotalElements());
+        postResponse.setTotalPages(posts.getTotalPages());
+        postResponse.setLast(posts.isLast());
+
+        return postResponse;
     }
 
     @Override
